@@ -6,7 +6,7 @@ class UFO extends THREE.Object3D {
         const self = this;
 
                 new THREE.GLTFLoader()
-                    .load('../assets/3d-models/ufo1.glb', function (object) {
+                    .load('./assets/3d-models/ufo1.glb', function (object) {
 
                         self.add(object.scene);
 
