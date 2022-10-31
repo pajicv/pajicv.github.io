@@ -1,4 +1,4 @@
-function toScreenPosition(point, camera) {
+const toScreenPosition = (point, camera) => {
     let vector = new THREE.Vector3();
 
     vector.copy(point);
@@ -11,3 +11,4 @@ function toScreenPosition(point, camera) {
 
     return vector;
 }
+

@@ -82,6 +82,26 @@ class App {
         this.xrSession.requestAnimationFrame(this.onXRFrame);
 
         // this.xrSession.addEventListener("select", this.onSelect);
+
+        /** Start the device orientation sensor */
+
+        const options = { frequency: 60, referenceFrame: "device" };
+        
+        this.sensor = new AbsoluteOrientationSensor(options);
+    
+        this.sensor.addEventListener('reading', this.onSensorReading);
+
+        this.sensor.start();
+    }
+
+    onSensorReading = (e) => {
+        let q = e.target.quaternion;
+        
+        this.heading = Math.atan2(2*q[0]*q[1] + 2*q[2]*q[3], 1 - 2*q[1]*q[1] - 2*q[2]*q[2]);
+
+        this.compass.rotation.set(0, this.heading + Math.PI, 0)
+
+        this.sensor.stop();
     }
 
     /**

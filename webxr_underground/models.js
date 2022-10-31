@@ -12,7 +12,7 @@ class Compass extends THREE.Object3D {
         this.add(nt);
 
         // create south triangle
-        const st = this.createTriangle('#0000ff');
+        const st = this.createTriangle('#ff0000');
 
         st.position.set(0, 0, 1);
 
@@ -23,20 +23,22 @@ class Compass extends THREE.Object3D {
         // create east triangle
         const east = this.createTriangle('#00ff00');
 
-        east.position.set(1, 0, 0);
-
         east.rotation.set(0, - Math.PI / 2, 0);
+
+        east.position.set(1, 0, 0);
 
         this.add(east);
 
         // create east triangle
         const west = this.createTriangle('#ffff00');
 
-        west.position.set(-1, 0, 0);
-
         west.rotation.set(0, Math.PI / 2, 0);
 
+        west.position.set(-1, 0, 0);
+
         this.add(west);
+
+        this.position.set(0, -1, 0);
     }
 
     createTriangle = (color) => {
@@ -45,9 +47,9 @@ class Compass extends THREE.Object3D {
         });
         
         const points = [];
-        points.push( new THREE.Vector3( -0.2, 0, 0 ) );
-        points.push( new THREE.Vector3( 0, 0, -1 ) );
         points.push( new THREE.Vector3( 0.2, 0, 0 ) );
+        points.push( new THREE.Vector3( 0, 0, -1 ) );
+        points.push( new THREE.Vector3( - 0.2, 0, 0 ) );
         
         const geometry = new THREE.BufferGeometry().setFromPoints( points );
         
