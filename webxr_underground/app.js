@@ -28,14 +28,12 @@ class App {
         const options = { frequency: 60, referenceFrame: "device" };
 
         this.sensor = new AbsoluteOrientationSensor(options);
-    
+
         this.sensor.addEventListener('reading', this.onSensorReading);
 
         this.sensor.start();
 
         this.headings120 = [];
-
-        this.headingUpdateTimestamp = new Date().getTime();
     }
 
     /** Find viewer's geo */
@@ -44,19 +42,19 @@ class App {
             enableHighAccuracy: true,
             timeout: 5000,
             maximumAge: 0
-          };
+        };
 
-          navigator.geolocation.getCurrentPosition(this.onGeoloactionSuccess, this.onGeolocationError, options);
+        navigator.geolocation.getCurrentPosition(this.onGeolocationSuccess, this.onGeolocationError, options);
     }
 
     onGeolocationSuccess = (position) => {
-        this.coordinates = {...position.coords};
+        this.coordinates = { ...position.coords };
     }
 
     onGeolocationError = (error) => {
         console.log(error);
     }
-    
+
     /**
      * Run when the Start AR button is pressed.
      */
@@ -116,12 +114,16 @@ class App {
         this.xrSession.requestAnimationFrame(this.onXRFrame);
 
         // this.xrSession.addEventListener("select", this.onSelect);
+
+        this.initDeviceOrientationSensor();
+
+        this.findViewersGeolocation();
     }
 
     onSensorReading = (e) => {
         let q = e.target.quaternion;
-        
-        const heading = Math.atan2(2*q[0]*q[1] + 2*q[2]*q[3], 1 - 2*q[1]*q[1] - 2*q[2]*q[2]);
+
+        const heading = Math.atan2(2 * q[0] * q[1] + 2 * q[2] * q[3], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2]);
 
         if (this.headings120.length >= 120) {
             this.headings120.shift();
@@ -168,21 +170,24 @@ class App {
             this.renderer.render(this.scene, this.camera)
         }
 
-        if (time - this.headingUpdateTimestamp > 2000) {
+        if (this.headingUpdateTimestamp) {
+            if (time - this.headingUpdateTimestamp > 2000) {
+                this.headingUpdateTimestamp = time;
+
+                const headingMedian = this.headings120[60];
+
+                this.compass.rotation.set(0, headingMedian, 0);
+
+                console.log('Viewer\'s geolocation coordinates');
+
+                console.log(this.coordinates);
+
+                console.log('Viewer\'s device orientation (heading)');
+
+                console.log(this.headingMedian);
+            }
+        } else
             this.headingUpdateTimestamp = time;
-
-            const headingMedian = this.headings120[60];
-
-            this.compass.rotation.set(0, headingMedian, 0);
-
-            console.log('Viewer\'s geolocation coordinates');
-
-            console.log(this.coordinates);
-
-            console.log('Viewer\'s device orientation (heading)');
-
-            console.log(this.headingMedian);
-        }
     }
 
     /**
@@ -210,11 +215,11 @@ class App {
         const light = new THREE.AmbientLight(0xffffff, 1);
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        
+
         directionalLight.position.set(10, 15, 10);
 
         this.scene.add(light);
-    
+
         this.scene.add(directionalLight);
 
         this.compass = new Compass();
