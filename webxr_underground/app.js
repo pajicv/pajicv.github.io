@@ -23,6 +23,40 @@ function onNoXRDevice() {
  * and handle rendering on every frame.
  */
 class App {
+    /** Start the device orientation sensor */
+    initDeviceOrientationSensor = () => {
+        const options = { frequency: 60, referenceFrame: "device" };
+
+        this.sensor = new AbsoluteOrientationSensor(options);
+    
+        this.sensor.addEventListener('reading', this.onSensorReading);
+
+        this.sensor.start();
+
+        this.headings120 = [];
+
+        this.headingUpdateTimestamp = new Date().getTime();
+    }
+
+    /** Find viewer's geo */
+    findViewersGeolocation = () => {
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          };
+
+          navigator.geolocation.getCurrentPosition(this.onGeoloactionSuccess, this.onGeolocationError, options);
+    }
+
+    onGeolocationSuccess = (position) => {
+        this.coordinates = {...position.coords};
+    }
+
+    onGeolocationError = (error) => {
+        console.log(error);
+    }
+    
     /**
      * Run when the Start AR button is pressed.
      */
@@ -82,26 +116,18 @@ class App {
         this.xrSession.requestAnimationFrame(this.onXRFrame);
 
         // this.xrSession.addEventListener("select", this.onSelect);
-
-        /** Start the device orientation sensor */
-
-        const options = { frequency: 60, referenceFrame: "device" };
-        
-        this.sensor = new AbsoluteOrientationSensor(options);
-    
-        this.sensor.addEventListener('reading', this.onSensorReading);
-
-        this.sensor.start();
     }
 
     onSensorReading = (e) => {
         let q = e.target.quaternion;
         
-        this.heading = Math.atan2(2*q[0]*q[1] + 2*q[2]*q[3], 1 - 2*q[1]*q[1] - 2*q[2]*q[2]);
+        const heading = Math.atan2(2*q[0]*q[1] + 2*q[2]*q[3], 1 - 2*q[1]*q[1] - 2*q[2]*q[2]);
 
-        this.compass.rotation.set(0, this.heading + Math.PI, 0)
+        if (this.headings120.length >= 120) {
+            this.headings120.shift();
+        }
 
-        this.sensor.stop();
+        this.headings120.push(heading);
     }
 
     /**
@@ -142,6 +168,21 @@ class App {
             this.renderer.render(this.scene, this.camera)
         }
 
+        if (time - this.headingUpdateTimestamp > 2000) {
+            this.headingUpdateTimestamp = time;
+
+            const headingMedian = this.headings120[60];
+
+            this.compass.rotation.set(0, headingMedian, 0);
+
+            console.log('Viewer\'s geolocation coordinates');
+
+            console.log(this.coordinates);
+
+            console.log('Viewer\'s device orientation (heading)');
+
+            console.log(this.headingMedian);
+        }
     }
 
     /**
