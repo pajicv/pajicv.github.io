@@ -7,14 +7,14 @@ class Compass extends THREE.Object3D {
         // create north triangle
         const nt = this.createTriangle('#0000ff');
 
-        nt.position.set(0, 0, -1);
+        nt.position.set(0, 0, -2);
 
         this.add(nt);
 
         // create south triangle
         const st = this.createTriangle('#ff0000');
 
-        st.position.set(0, 0, 1);
+        st.position.set(0, 0, 2);
 
         st.rotation.set(0, Math.PI, 0);
 
@@ -25,7 +25,7 @@ class Compass extends THREE.Object3D {
 
         east.rotation.set(0, - Math.PI / 2, 0);
 
-        east.position.set(1, 0, 0);
+        east.position.set(2, 0, 0);
 
         this.add(east);
 
@@ -34,11 +34,9 @@ class Compass extends THREE.Object3D {
 
         west.rotation.set(0, Math.PI / 2, 0);
 
-        west.position.set(-1, 0, 0);
+        west.position.set(-2, 0, 0);
 
         this.add(west);
-
-        this.position.set(0, -1, 0);
     }
 
     createTriangle = (color) => {

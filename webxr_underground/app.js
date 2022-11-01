@@ -34,6 +34,8 @@ class App {
         this.sensor.start();
 
         this.headings120 = [];
+
+        this.deviceOrientationQuarternions120 = []; 
     }
 
     /** Find viewer's geo */
@@ -48,7 +50,7 @@ class App {
     }
 
     onGeolocationSuccess = (position) => {
-        this.coordinates = { ...position.coords };
+        this.coordinates = position.coords;
     }
 
     onGeolocationError = (error) => {
@@ -61,7 +63,8 @@ class App {
     activateXR = async () => {
         try {
             this.xrSession = await navigator.xr.requestSession("immersive-ar", {
-                requiredFeatures: ['hit-test', 'dom-overlay'],
+                requiredFeatures: ['hit-test', 'dom-overlay', 'anchors', 'local-floor'],
+                optionalFeatures: ['bounded-floor'],
                 domOverlay: { root: document.body }
             });
 
@@ -102,7 +105,7 @@ class App {
         this.setupThreeJs();
 
         /** Setup an XRReferenceSpace using the "local" coordinate system. */
-        this.localReferenceSpace = await this.xrSession.requestReferenceSpace('local');
+        this.localReferenceSpace = await this.xrSession.requestReferenceSpace('local-floor');
 
         /** Create another XRReferenceSpace that has the viewer as the origin. */
         this.viewerSpace = await this.xrSession.requestReferenceSpace('viewer');
@@ -127,9 +130,12 @@ class App {
 
         if (this.headings120.length >= 120) {
             this.headings120.shift();
+            this.deviceOrientationQuarternions120.shift();
         }
 
         this.headings120.push(heading);
+
+        this.deviceOrientationQuarternions120.push(q);
     }
 
     /**
@@ -151,7 +157,6 @@ class App {
         const pose = frame.getViewerPose(this.localReferenceSpace);
 
         if (pose) {
-
             /** In mobile AR, we only have one view. */
             const view = pose.views[0];
 
@@ -170,13 +175,23 @@ class App {
             this.renderer.render(this.scene, this.camera)
         }
 
-        if (this.headingUpdateTimestamp) {
+        if (this.anchor) {
+            const anchorPose = frame.getPose(this.anchor.anchorSpace, this.localReferenceSpace);
+            if (anchorPose) {
+                // this.anchor.context.sceneObject.matrix = anchorPose.transform.matrix;
+                this.anchor.context.sceneObject.visible = true;
+            } else {
+                this.anchor.context.sceneObject.visible = false;
+            }
+        }
+
+        if (this.headingUpdateTimestamp && !this.anchor) {
             if (time - this.headingUpdateTimestamp > 2000) {
                 this.headingUpdateTimestamp = time;
 
                 const headingMedian = this.headings120[60];
 
-                this.compass.rotation.set(0, headingMedian, 0);
+                // this.compass.rotation.set(0, headingMedian, 0);
 
                 console.log('Viewer\'s geolocation coordinates');
 
@@ -184,7 +199,30 @@ class App {
 
                 console.log('Viewer\'s device orientation (heading)');
 
-                console.log(this.headingMedian);
+                console.log(headingMedian * (180 / Math.PI));
+
+                const anchorPose = new XRRigidTransform(
+                    { x: 0, y: 0, z: 0 },
+                    { x: 0, y: 0, z: 0, w: 1 }
+                );
+
+                const self = this;
+
+                frame.createAnchor(anchorPose, this.localReferenceSpace).then((anchor) => {
+                    self.anchor = anchor;
+
+                    self.anchor.context = {};
+
+                    const compass = new Compass();
+
+                    compass.rotation.set(0, - headingMedian, 0);
+
+                    this.scene.add(compass);
+
+                    self.anchor.context.sceneObject = compass;
+                }, (error) => {
+                    console.error("Could not create anchor: " + error);
+                });
             }
         } else
             this.headingUpdateTimestamp = time;
@@ -221,10 +259,6 @@ class App {
         this.scene.add(light);
 
         this.scene.add(directionalLight);
-
-        this.compass = new Compass();
-
-        this.scene.add(this.compass);
 
         /** We'll update the camera matrices directly from API, so
          * disable matrix auto updates so three.js doesn't attempt
