@@ -35,7 +35,7 @@ class App {
 
         this.headings120 = [];
 
-        this.deviceOrientationQuarternions120 = []; 
+        this.deviceOrientationQuarternions120 = [];
     }
 
     /** Find viewer's geo */
@@ -208,12 +208,31 @@ class App {
 
                 const self = this;
 
+                const pointsLatLng = [
+                    [45.207874, 19.745987],
+                    [45.207902, 19.746197],
+                    [45.207920, 19.746336],
+                    [45.207928, 19.746398],
+                    [45.207812, 19.746471],
+                    [45.207789, 19.746217],
+                    [45.207782, 19.746009],
+                    [45.207874, 19.745987]
+                ];
+
+                const points = pointsLatLng.map(([lat, lng]) => {
+                    const [x, y] = degrees2meters(lng, lat);
+
+                    const [vx, vy] = degrees2meters(this.coordinates.longitude, this.coordinates.latitude);
+
+                    return [x - vx, -1.5, y - vy];
+                });
+
                 frame.createAnchor(anchorPose, this.localReferenceSpace).then((anchor) => {
                     self.anchor = anchor;
 
                     self.anchor.context = {};
 
-                    const compass = new Compass();
+                    const compass = new Compass(points);
 
                     compass.rotation.set(0, - headingMedian, 0);
 

@@ -1,5 +1,5 @@
 class Compass extends THREE.Object3D {
-    constructor() {
+    constructor(points) {
         super();
 
         this.visible = true;
@@ -37,20 +37,34 @@ class Compass extends THREE.Object3D {
         west.position.set(-2, 0, 0);
 
         this.add(west);
+
+        // create line
+
+        this.add(this.createLine(points))
     }
 
     createTriangle = (color) => {
         const material = new THREE.LineBasicMaterial({
             color
         });
-        
+
         const points = [];
-        points.push( new THREE.Vector3( 0.2, 0, 0 ) );
-        points.push( new THREE.Vector3( 0, 0, -1 ) );
-        points.push( new THREE.Vector3( - 0.2, 0, 0 ) );
-        
-        const geometry = new THREE.BufferGeometry().setFromPoints( points );
-        
-        return new THREE.Mesh( geometry, material );
+        points.push(new THREE.Vector3(0.2, 0, 0));
+        points.push(new THREE.Vector3(0, 0, -1));
+        points.push(new THREE.Vector3(- 0.2, 0, 0));
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+        return new THREE.Mesh(geometry, material);
+    }
+
+    createLine = (points) => {
+        const geometry = new THREE.BufferGeometry().setFromPoints(
+            points.map(point => new THREE.Vector3(...point))
+        );
+
+        const material = new THREE.LineBasicMaterial( { color: 0x0000ff, linewidth: 5 } );
+
+        return new THREE.Line( geometry, material );
     }
 }
